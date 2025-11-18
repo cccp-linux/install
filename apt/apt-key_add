@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if (($# < 2)); then
+    echo "Usage: $(basename "$0") <keyring> <key> [<key>] ..."
+    exit 1
+fi
+
+ring="$1"
+shift
+
+temp=$(mktemp)
+trap 'rm -f "$temp"' EXIT
+
+# this has to be done in two steps
+keyserver=hkp://keyserver.ubuntu.com:80
+gpg --no-default-keyring --keyring "$temp" --keyserver "$keyserver" --recv-keys "$@" &&
+gpg --no-default-keyring --keyring "$temp" --export "$@" > "$ring"
