@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e
+
+cyan() { tput setaf 6; echo "$@"; tput sgr0; }
+ red() { tput setaf 1; echo "$@"; tput sgr0; }
+
+(($EUID)) && { red "Must be root"; exit 1; }
+(($#< 1)) && { red "Specify username to add"; exit 1; }
+name="$1"
+
+cyan "Creating user $name"
+systemd-nspawn -D ./root bash -c "
+adduser --add_extra_groups $name
+adduser $name sudo
+adduser $name systemd-journal
+"

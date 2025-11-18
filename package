@@ -1,0 +1,8 @@
+#!/bin/bash
+
+cyan() { tput setaf 6; echo "$@"; tput sgr0; }
+ red() { tput setaf 1; echo "$@"; tput sgr0; }
+
+(($EUID)) && { red "Must be root"; exit 1; }
+
+tar -cvzpf image.tar.gz -C root/ "$@" .

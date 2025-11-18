@@ -1,0 +1,9 @@
+#!/bin/bash
+
+cyan() { tput setaf 6; echo "$@"; tput sgr0; }
+ red() { tput setaf 1; echo "$@"; tput sgr0; }
+
+(($EUID)) && { red "Must be root"; exit 1; }
+
+systemd-nspawn --bind=/var/cache/apt/archives --resolv-conf=bind-stub --directory=root/ --timezone=off "$@"
+rm -rv root/{root,home/*}/.bash_history 2>/dev/null
