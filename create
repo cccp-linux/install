@@ -38,7 +38,7 @@ fi
 mkdir $cage
 
 ARCH=${ARCH:-$(dpkg-architecture -q DEB_BUILD_ARCH)}
-DIST=${DIST:-$(ubuntu-distro-info --stable)}
+DIST=${DIST:-resolute}
 
 cyan -n "Boot-strapping: "; echo "$DIST $ARCH"
 sleep 3
