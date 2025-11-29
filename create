@@ -66,6 +66,23 @@ else
 ####################
 # stage3
 ####################
+install_package()
+{
+    cyan "Installing $1"
+    apt-get -y install --no-install-recommends "$1"
+    echo
+
+    if [[ ! "$minimal" ]]; then
+        cyan "Installing $1+"
+        rec=$(apt-cache show "$1" | sed -n "/Recommends:/ { s///; s/,//g; p }")
+        man=$(apt-mark showmanual)
+        new=$(echo $man $man $rec | tr ' ' '\n' | sort | uniq -u)
+        apt-get -y install --no-install-recommends $new
+        apt-mark auto $new
+        echo
+    fi
+}
+
 export DEBIAN_FRONTEND=noninteractive
 
 echo
@@ -79,18 +96,7 @@ apt-get -y dist-upgrade --autoremove --purge
 apt-mark showmanual | xargs apt-mark auto
 echo
 
-cyan "Installing cccp-standard-meta"
-apt-get -y install --no-install-recommends cccp-standard-meta
-echo
-
-if [[ ! "$minimal" ]]; then
-    cyan "Installing cccp-standard-meta+"
-    rec=$(apt-cache show cccp-standard-meta | sed -n "/Recommends:/ { s///; s/,//g; p }")
-    man=$(apt-mark showmanual)
-    new=$(echo $man $man $rec | tr ' ' '\n' | sort | uniq -u)
-    apt-get -y install --no-install-recommends $new
-    apt-mark auto $new
-fi
+install_package cccp-standard-meta
 
 cyan "Generating locales"
 sed -ri -e "s/^# (en_US.UTF-8.*)$/\1/" /etc/locale.gen
@@ -98,11 +104,7 @@ echo LANG=en_US.UTF-8 > /etc/default/locale
 dpkg-reconfigure -fnoninteractive locales
 echo
 
-if [[ ! "$no_kernel" ]]; then
-    cyan "Installing cccp-boot-meta"
-    apt-get -y install --no-install-recommends cccp-boot-meta
-    echo
-fi
+[[ "$no_kernel" ]] || minimal=1 install_package cccp-boot-meta
 
 cyan "Creating fstab"
 cat > /etc/fstab <<EOF
