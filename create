@@ -69,15 +69,15 @@ else
 install_package()
 {
     cyan "Installing $1"
-    apt-get -y install --no-install-recommends "$1"
+    apt-get -y install --no-install-recommends $@
     echo
 
     if [[ ! "$minimal" ]]; then
         cyan "Installing $1+"
-        rec=$(apt-cache show "$1" | sed -n "/Recommends:/ { s///; s/,//g; p }")
+        rec=$(apt-cache show $1 | sed -n "/Recommends:/ { s///; s/,//g; p }")
         man=$(apt-mark showmanual)
         new=$(echo $man $man $rec | tr ' ' '\n' | sort | uniq -u)
-        apt-get -y install --no-install-recommends $new
+        apt-get -y install --no-install-recommends $new $@
         apt-mark auto $new
         echo
     fi
