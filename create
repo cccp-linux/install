@@ -131,7 +131,7 @@ sed -ri -e "s/01;32m/01;31m/g" /root/.bashrc
 echo
 
 cyan "Disabling services"
-systemctl disable apt-daily-upgrade.timer apt-daily.timer dpkg-db-backup.timer man-db.timer || true
+systemctl disable apt-daily-upgrade.timer apt-daily.timer dpkg-db-backup.timer man-db.timer motd-news.timer || true
 echo
 
 cyan "Cleaning up"
