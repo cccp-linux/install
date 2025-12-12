@@ -127,7 +127,7 @@ sed -ri -e "s/#(force_color_prompt=yes)/\1/g" /etc/skel/.bashrc
 
 if [[ ! "$minimal" ]]; then
     install_package term-meta
-    install_package neovim-meta
+    install_package neovim-meta git-
 fi
 
 cyan "Updating root files"
