@@ -122,7 +122,7 @@ cyan "Setting hostname"
 echo linux > /etc/hostname
 
 cyan "Modifying journald.conf"
-sed -ri -e "s/#Storage=auto/Storage=volatile/" -e "s/#SplitMode=uid/SplitMode=none/" /etc/systemd/journald.conf
+sed -ri -e "s/#(SplitMode)=.*/\1=none/" /etc/systemd/journald.conf
 
 cyan "Forcing color terminal"
 sed -ri -e "s/#(force_color_prompt)=.*/\1=yes/" /etc/skel/.bashrc
