@@ -106,8 +106,6 @@ echo LANG=en_US.UTF-8 > /etc/default/locale
 dpkg-reconfigure -fnoninteractive locales
 echo
 
-[[ "$no_kernel" ]] || minimal=1 install_package cccp-boot-meta
-
 cyan "Creating fstab"
 cat > /etc/fstab <<EOF
 # <source>      <target>        <type>  <options>                   <dump>  <pass>
@@ -137,8 +135,12 @@ systemctl disable getty@tty1.service
 cyan "Forcing color terminal"
 sed -ri -e "s/#(force_color_prompt)=.*/\1=yes/" /etc/skel/.bashrc
 
-cyan "Updating initramfs-tools"
-echo "i915" >> /etc/initramfs/modules
+if [[ ! "$no_kernel" ]]; then
+    minimal=1 install_package cccp-boot-meta
+
+    cyan "Adding i915 to initramfs"
+    echo "i915" >> /etc/initramfs/modules
+fi
 
 if [[ ! "$minimal" ]]; then
     install_package term-meta
