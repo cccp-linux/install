@@ -46,15 +46,17 @@ debootstrap --variant=minbase --arch=$ARCH --cache-dir=/var/cache/apt/archives $
 echo
 
 cyan "Adding Ubuntu sources"
-[[ "$ARCH" == "i386" || "$ARCH" == "amd64" ]] && url=http://archive.ubuntu.com/ubuntu || url=http://ports.ubuntu.com/ubuntu-ports
 rm -r $apt/{sources.list,trusted.gpg.d}
 cp apt/sources.list.d/50-ubuntu.sources $apt/sources.list.d/
-sed -ri -e "s|%distro%|$DIST|g" -e "s|%arch%|$ARCH|g" -e "s|URIs:.*|URIs: $url|" $apt/sources.list.d/50-ubuntu.sources
+sed -ri -e "s/%distro%/$DIST/g; s/%arch%/$ARCH/g" $apt/sources.list.d/50-ubuntu.sources
+
+url=http://ports.ubuntu.com/ubuntu-ports
+[[ "$ARCH" == "i386" || "$ARCH" == "amd64" ]] || sed -ri -e "s|URIs: .*|URIs: $url|" $apt/sources.list.d/50-ubuntu.sources
 
 cyan "Adding CCCP Linux sources"
 cp apt/sources.list.d/30-cccp-linux-main.sources $apt/sources.list.d/
 cp apt/keyrings/cccp-linux-keyring.gpg $apt/keyrings/
-sed -ri -e "s|%distro%|$DIST|g" -e "s|%arch%|$ARCH|g" $apt/sources.list.d/30-cccp-linux-main.sources
+sed -ri -e "s/%distro%/$DIST/g; s/%arch%/$ARCH/g" $apt/sources.list.d/30-cccp-linux-main.sources
 echo
 
 cyan "Moving onto stage3"
@@ -99,7 +101,7 @@ echo
 install_package cccp-standard-meta
 
 cyan "Generating locales"
-sed -ri -e "s/^# (en_US.UTF-8.*)$/\1/" /etc/locale.gen
+sed -ri -e "s/# (en_US.UTF-8.*)/\1/" /etc/locale.gen
 echo LANG=en_US.UTF-8 > /etc/default/locale
 dpkg-reconfigure -fnoninteractive locales
 echo
@@ -123,7 +125,7 @@ cyan "Modifying journald.conf"
 sed -ri -e "s/#Storage=auto/Storage=volatile/" -e "s/#SplitMode=uid/SplitMode=none/" /etc/systemd/journald.conf
 
 cyan "Forcing color terminal"
-sed -ri -e "s/#(force_color_prompt=yes)/\1/g" /etc/skel/.bashrc
+sed -ri -e "s/#(force_color_prompt)=.*/\1=yes/" /etc/skel/.bashrc
 
 if [[ ! "$minimal" ]]; then
     install_package term-meta
@@ -132,7 +134,7 @@ fi
 
 cyan "Updating root files"
 cp -rv /etc/skel/* /root/
-sed -ri -e "s/01;32m/01;31m/g" /root/.bashrc
+sed -ri -e "s/01;32m/01;31m/" /root/.bashrc
 echo
 
 cyan "Disabling services"
