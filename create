@@ -137,6 +137,9 @@ systemctl disable getty@tty1.service
 cyan "Forcing color terminal"
 sed -ri -e "s/#(force_color_prompt)=.*/\1=yes/" /etc/skel/.bashrc
 
+cyan "Updating initramfs-tools"
+echo "i915" >> /etc/initramfs/modules
+
 if [[ ! "$minimal" ]]; then
     install_package term-meta
     install_package neovim-meta git-
