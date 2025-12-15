@@ -124,6 +124,16 @@ echo linux > /etc/hostname
 cyan "Modifying journald.conf"
 sed -ri -e "s/#(SplitMode)=.*/\1=none/" /etc/systemd/journald.conf
 
+cyan "Modifying logind.conf"
+sed -ri -e "
+    s/#(NAutoVTs)=.*/\1=12/;
+    s/#(ReserveVT)=.*/\1=1/;
+    s/#(HandlePowerKey)=.*/\1=suspend/;
+    s/#(HandlePowerKeyLongPress)=.*/\1=poweroff/;
+    s/#(HandleLidSwitch(ExternalPower)?)=.*/\1=suspend/;
+" /etc/systemd/logind.conf
+systemctl disable getty@tty1.service
+
 cyan "Forcing color terminal"
 sed -ri -e "s/#(force_color_prompt)=.*/\1=yes/" /etc/skel/.bashrc
 
