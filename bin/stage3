@@ -1,0 +1,117 @@
+#!/bin/bash
+set -e
+shopt -s dotglob
+
+# prevent services from starting during install
+fp=/usr/sbin/policy-rc.d
+trap "rm -f $fp" EXIT
+echo -e "#!/bin/sh\nexit 101" > $fp
+chmod +x $fp
+
+cyan() { tput setaf 6; echo "$@"; tput sgr0; }
+ red() { tput setaf 1; echo "$@"; tput sgr0; }
+
+fail() { red "$@"; exit 1; }
+
+unset minimal no_kernel
+
+for p in $@; do
+    case $p in
+        minimal)   minimal=1;;
+        no-kernel) no_kernel=1;;
+    esac
+done
+
+export DEBIAN_FRONTEND=noninteractive
+
+cyan "Installing certificates"
+apt-get -y install ca-certificates
+echo
+
+cyan "Updating system"
+apt-get update
+apt-get -y dist-upgrade --autoremove --purge
+apt-mark showmanual | xargs apt-mark auto
+echo
+
+install_package()
+{
+    cyan "Installing $1"
+    apt-get -y install --no-install-recommends $@
+    echo
+
+    if [[ ! "$minimal" ]]; then
+        cyan "Installing $1+"
+        rec=$(apt-cache show $1 | sed -n "/Recommends:/ { s///; s/,//g; p }")
+        man=$(apt-mark showmanual)
+        new=$(echo $man $man $rec | tr ' ' '\n' | sort | uniq -u)
+        apt-get -y install --no-install-recommends $new $@
+        apt-mark auto $new
+        echo
+    fi
+}
+
+install_package cccp-standard-meta
+
+cyan "Generating locales"
+sed -ri -e "s/# (en_US.UTF-8.*)/\1/" /etc/locale.gen
+echo LANG=en_US.UTF-8 > /etc/default/locale
+dpkg-reconfigure -fnoninteractive locales
+echo
+
+cyan "Creating fstab"
+cat > /etc/fstab <<EOF
+# <source>      <target>        <type>  <options>                   <dump>  <pass>
+
+LABEL=root      /               ext4    noatime,errors=remount-ro   0       1
+LABEL=efi       /boot/efi       vfat    noatime,umask=0077          0       1
+
+#/swapfile      none            swap    sw                          0       0
+EOF
+
+cyan "Setting hostname"
+echo linux > /etc/hostname
+
+cyan "Modifying journald.conf"
+sed -ri -e "s/#(SplitMode)=.*/\1=none/" /etc/systemd/journald.conf
+
+cyan "Modifying logind.conf"
+sed -ri -e "
+    s/#(NAutoVTs)=.*/\1=12/;
+    s/#(ReserveVT)=.*/\1=1/;
+    s/#(HandlePowerKey)=.*/\1=suspend/;
+    s/#(HandlePowerKeyLongPress)=.*/\1=poweroff/;
+    s/#(HandleLidSwitch(ExternalPower)?)=.*/\1=suspend/;
+" /etc/systemd/logind.conf
+systemctl disable getty@tty1.service
+
+cyan "Forcing color terminal"
+sed -ri -e "s/#(force_color_prompt)=.*/\1=yes/" /etc/skel/.bashrc
+
+if [[ ! "$no_kernel" ]]; then
+    minimal=1 install_package cccp-boot-meta
+
+    cyan "Adding i915 to initramfs"
+    echo "i915" >> /etc/initramfs/modules
+fi
+
+if [[ ! "$minimal" ]]; then
+    install_package term-meta
+
+    cyan "Setting console font"
+    echo "FONT='courier48x24.psf'" >> /etc/default/console-setup
+
+    install_package neovim-meta git-
+fi
+
+cyan "Updating root files"
+cp -rv /etc/skel/* /root/
+sed -ri -e "s/01;32m/01;31m/" /root/.bashrc
+echo
+
+cyan "Disabling services"
+systemctl disable apt-daily-upgrade.timer apt-daily.timer dpkg-db-backup.timer man-db.timer motd-news.timer || true
+echo
+
+cyan "Cleaning up"
+rm -rv /etc/{apparmor.d,cron.*,init.d,rc?.d,rsyslog.d} || true

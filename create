@@ -1,51 +1,25 @@
 #!/bin/bash
 set -e
-shopt -s dotglob
 
-cyan() { tput setaf 6; echo "$@"; tput sgr0; }
- red() { tput setaf 1; echo "$@"; tput sgr0; }
+PATH=$(dirname "$0")/bin:$PATH
+source color
 
-(($EUID)) && { red "Must be root"; exit 1; }
+(($EUID)) && fail "Must be root"
 
-unset minimal no_kernel stage3
-
-for p in $@; do
-    case $p in
-        minimal)   minimal=1;;
-        no-kernel) no_kernel=1;;
-        stage3)    stage3=1;;
-    esac
-done
-
-if [[ ! -n "$stage3" ]]; then
-
-####################
-# stage2
-####################
-
-cage=./root
+cage=./cage
 apt=$cage/etc/apt
 
-if [[ -d $cage ]]; then
-    for n in 5 4 3 2 1; do
-        red -ne "\rRemoving cage in"; echo -n " $n ... "
-        sleep 1
-    done
-    echo
-    rm -rv $cage
-    echo
-fi
-mkdir $cage
+export ARCH=${ARCH:-$(dpkg-architecture -q DEB_BUILD_ARCH)}
+export DIST=${DIST:-resolute}
 
-ARCH=${ARCH:-$(dpkg-architecture -q DEB_BUILD_ARCH)}
-DIST=${DIST:-resolute}
-
-cyan -n "Boot-strapping: "; echo "$DIST $ARCH"
-sleep 3
-debootstrap --variant=minbase --arch=$ARCH --cache-dir=/var/cache/apt/archives $DIST $cage
+stop $cage
+purge $cage
 echo
 
-cyan "Adding Ubuntu sources"
+bootstrap $cage
+echo
+
+cyan "Updating Ubuntu sources"
 rm -r $apt/{sources.list,trusted.gpg.d}
 cp apt/sources.list.d/50-ubuntu.sources $apt/sources.list.d/
 sed -ri -e "s/%distro%/$DIST/g; s/%arch%/$ARCH/g" $apt/sources.list.d/50-ubuntu.sources
@@ -53,110 +27,18 @@ sed -ri -e "s/%distro%/$DIST/g; s/%arch%/$ARCH/g" $apt/sources.list.d/50-ubuntu.
 url=http://ports.ubuntu.com/ubuntu-ports
 [[ "$ARCH" == "i386" || "$ARCH" == "amd64" ]] || sed -ri -e "s|URIs: .*|URIs: $url|" $apt/sources.list.d/50-ubuntu.sources
 
-cyan "Adding CCCP Linux sources"
+cyan "Adding CCCP sources"
 cp apt/sources.list.d/30-cccp-linux-main.sources $apt/sources.list.d/
 cp apt/keyrings/cccp-linux-keyring.gpg $apt/keyrings/
 sed -ri -e "s/%distro%/$DIST/g; s/%arch%/$ARCH/g" $apt/sources.list.d/30-cccp-linux-main.sources
 echo
 
-cyan "Moving onto stage3"
-cp "$0" $cage/root/
-systemd-nspawn --bind=/var/cache/apt/archives --resolv-conf=bind-stub --directory=$cage --timezone=off /root/$(basename "$0") "$@" stage3
-
-else
-
-####################
-# stage3
-####################
-install_package()
-{
-    cyan "Installing $1"
-    apt-get -y install --no-install-recommends $@
-    echo
-
-    if [[ ! "$minimal" ]]; then
-        cyan "Installing $1+"
-        rec=$(apt-cache show $1 | sed -n "/Recommends:/ { s///; s/,//g; p }")
-        man=$(apt-mark showmanual)
-        new=$(echo $man $man $rec | tr ' ' '\n' | sort | uniq -u)
-        apt-get -y install --no-install-recommends $new $@
-        apt-mark auto $new
-        echo
-    fi
-}
-
-export DEBIAN_FRONTEND=noninteractive
-
-echo
-cyan "Installing certificates"
-apt-get -y install ca-certificates
+spawn $cage
 echo
 
-cyan "Updating system"
-apt-get update
-apt-get -y dist-upgrade --autoremove --purge
-apt-mark showmanual | xargs apt-mark auto
+cyan "Starting stage3"
+cp -v $(dirname "$0")/bin/stage3 $cage/root/
+shell $cage /root/stage3 "$@"
 echo
 
-install_package cccp-standard-meta
-
-cyan "Generating locales"
-sed -ri -e "s/# (en_US.UTF-8.*)/\1/" /etc/locale.gen
-echo LANG=en_US.UTF-8 > /etc/default/locale
-dpkg-reconfigure -fnoninteractive locales
-echo
-
-cyan "Creating fstab"
-cat > /etc/fstab <<EOF
-# <source>      <target>        <type>  <options>                   <dump>  <pass>
-
-LABEL=root      /               ext4    noatime,errors=remount-ro   0       1
-LABEL=efi       /boot/efi       vfat    noatime,umask=0077          0       1
-
-#/swapfile      none            swap    sw                          0       0
-EOF
-
-cyan "Setting hostname"
-echo linux > /etc/hostname
-
-cyan "Modifying journald.conf"
-sed -ri -e "s/#(SplitMode)=.*/\1=none/" /etc/systemd/journald.conf
-
-cyan "Modifying logind.conf"
-sed -ri -e "
-    s/#(NAutoVTs)=.*/\1=12/;
-    s/#(ReserveVT)=.*/\1=1/;
-    s/#(HandlePowerKey)=.*/\1=suspend/;
-    s/#(HandlePowerKeyLongPress)=.*/\1=poweroff/;
-    s/#(HandleLidSwitch(ExternalPower)?)=.*/\1=suspend/;
-" /etc/systemd/logind.conf
-systemctl disable getty@tty1.service
-
-cyan "Forcing color terminal"
-sed -ri -e "s/#(force_color_prompt)=.*/\1=yes/" /etc/skel/.bashrc
-
-if [[ ! "$no_kernel" ]]; then
-    minimal=1 install_package cccp-boot-meta
-
-    cyan "Adding i915 to initramfs"
-    echo "i915" >> /etc/initramfs/modules
-fi
-
-if [[ ! "$minimal" ]]; then
-    install_package term-meta
-    install_package neovim-meta git-
-fi
-
-cyan "Updating root files"
-cp -rv /etc/skel/* /root/
-sed -ri -e "s/01;32m/01;31m/" /root/.bashrc
-echo
-
-cyan "Disabling services"
-systemctl disable apt-daily-upgrade.timer apt-daily.timer dpkg-db-backup.timer man-db.timer motd-news.timer || true
-echo
-
-cyan "Cleaning up"
-rm -rv /etc/{apparmor.d,cron.*,init.d,rc?.d,rsyslog.d} || true
-
-fi
+stop $cage

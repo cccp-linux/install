@@ -1,16 +1,14 @@
 #!/bin/bash
 set -e
 
-cyan() { tput setaf 6; echo "$@"; tput sgr0; }
- red() { tput setaf 1; echo "$@"; tput sgr0; }
+PATH=$(dirname "$0")/bin:$PATH
+source color
 
-(($EUID)) && { red "Must be root"; exit 1; }
-(($#< 1)) && { red "Specify username to add"; exit 1; }
-name="$1"
+(($EUID)) && fail "Must be root"
+(($#< 1)) && fail "Specify username to add"
 
-cyan "Creating user $name"
-systemd-nspawn -D ./root bash -c "
-adduser --add_extra_groups $name
-adduser $name sudo
-adduser $name systemd-journal
-"
+cage=./cage
+spawn $cage
+cyan "Creating user $1"
+shell $cage /usr/bin/homectl create --member-of=audio,render,sudo,systemd-journal,users,video "$@"
+stop  $cage

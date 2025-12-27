@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e
+
+source $(dirname "$0")/color
+cage=${1:-cage}
+
+if [[ -d "$cage" ]]; then
+    for n in 5 4 3 2 1; do
+        red -ne "\rPurging $cage in"; echo -n " $n ... "
+        sleep 1
+    done
+    echo
+
+    rm -rv $cage
+fi
+mkdir $cage

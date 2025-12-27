@@ -1,0 +1,14 @@
+#!/bin/bash
+set -e
+
+source $(dirname "$0")/color
+cage=${1:-cage}
+name=$(basename "$cage")
+
+if ! machinectl show $name 2>/dev/null | grep -q State=running; then
+    cyan "Spawning $name"
+    systemd-nspawn --boot --bind=/var/cache/apt/archives --directory=$cage --machine=$name --timezone=off &
+
+    sleep 3
+    echo
+fi

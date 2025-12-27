@@ -1,8 +1,11 @@
 #!/bin/bash
+set -e
 
-cyan() { tput setaf 6; echo "$@"; tput sgr0; }
- red() { tput setaf 1; echo "$@"; tput sgr0; }
+PATH=$(dirname "$0")/bin:$PATH
+source color
 
-(($EUID)) && { red "Must be root"; exit 1; }
+(($EUID)) && fail "Must be root"
 
-tar -cvzpf image.tar.gz -C root/ "$@" .
+cage=./cage
+rm -rv $cage/{root,home/*}/.bash_history 2>/dev/null
+tar -cvzpf image.tar.gz -C $cage "$@" .
