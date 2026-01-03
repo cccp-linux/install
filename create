@@ -19,26 +19,45 @@ echo
 bootstrap $cage
 echo
 
-cyan "Updating Ubuntu sources"
-rm -r $apt/{sources.list,trusted.gpg.d}
-cp apt/sources.list.d/50-ubuntu.sources $apt/sources.list.d/
-sed -ri -e "s/%distro%/$DIST/g; s/%arch%/$ARCH/g" $apt/sources.list.d/50-ubuntu.sources
+if [[ "$DIST" == "pika" ]]; then
+    cyan "Adding PikaOS sources"
+    rm -r $apt/{sources.list,trusted.gpg.d}
+    cp -v apt/sources.list.d/50-pika.sources $apt/sources.list.d/
+    cp -v apt/keyrings/pika-keyring.gpg $apt/keyrings/
+    cp -v apt/preferences.d/50-pika $apt/preferences.d/
+    echo
 
-url=http://ports.ubuntu.com/ubuntu-ports
-[[ "$ARCH" == "i386" || "$ARCH" == "amd64" ]] || sed -ri -e "s|URIs: .*|URIs: $url|" $apt/sources.list.d/50-ubuntu.sources
+elif [[ "$DIST" == "unstable" || "$DIST" == "sid" ]]; then
+    cyan "Updating Debian sources"
+    rm -r $apt/{sources.list,trusted.gpg.d}
+    cp -v apt/sources.list.d/50-debian-sid.sources $apt/sources.list.d/
+    echo
 
-cyan "Adding CCCP sources"
-cp apt/sources.list.d/30-cccp-linux-main.sources $apt/sources.list.d/
-cp apt/keyrings/cccp-linux-keyring.gpg $apt/keyrings/
-sed -ri -e "s/%distro%/$DIST/g; s/%arch%/$ARCH/g" $apt/sources.list.d/30-cccp-linux-main.sources
-echo
+elif debian-distro-info --all | grep -qx "$DIST"; then
+    cyan "Updating Debian sources"
+    rm -r $apt/{sources.list,trusted.gpg.d}
+    cp -v apt/sources.list.d/50-debian.sources $apt/sources.list.d/
+    sed -ri -e "s/%distro%/$DIST/g; s/%arch%/$ARCH/g" $apt/sources.list.d/50-debian.sources
+    echo
+
+elif ubuntu-distro-info --all | grep -qx "$DIST"; then
+    cyan "Updating Ubuntu sources"
+    rm -r $apt/{sources.list,trusted.gpg.d}
+    cp -v apt/sources.list.d/50-ubuntu.sources $apt/sources.list.d/
+    sed -ri -e "s/%distro%/$DIST/g; s/%arch%/$ARCH/g" $apt/sources.list.d/50-ubuntu.sources
+
+    url=http://ports.ubuntu.com/ubuntu-ports
+    [[ "$ARCH" == "i386" || "$ARCH" == "amd64" ]] || sed -ri -e "s|URIs: .*|URIs: $url|" $apt/sources.list.d/50-ubuntu.sources
+    echo
+fi
 
 spawn $cage
 echo
 
 cyan "Starting stage3"
 cp -v $(dirname "$0")/bin/stage3 $cage/root/
-shell $cage /root/stage3 "$@"
+cp -v $(dirname "$0")/deb/*.deb $cage/root/
+shell $cage /root/stage3 "$DIST" "$@"
 echo
 
 stop $cage

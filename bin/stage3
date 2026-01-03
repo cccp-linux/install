@@ -13,45 +13,57 @@ cyan() { tput setaf 6; echo "$@"; tput sgr0; }
 
 fail() { red "$@"; exit 1; }
 
-unset minimal no_kernel
+unset minimal no_kernel pika
 
 for p in $@; do
     case $p in
         minimal)   minimal=1;;
         no-kernel) no_kernel=1;;
+        pika)      pika=1;;
     esac
 done
 
 export DEBIAN_FRONTEND=noninteractive
+option=(-y --reinstall --allow-downgrades --no-install-recommends -o Dpkg::Options::="--force-confnew")
 
-cyan "Installing certificates"
-apt-get -y install ca-certificates
-echo
+if [[ "$pika" ]]; then
+    cyan "Shape-shifting to PikaOS"
+    tee /etc/apt/preferences.d/00-pika-temp <<EOF
+Package: *
+Pin: release a=pika,c=nest
+Pin-Priority: 1001
+EOF
+    apt -y update
+    apt -qq list ~i 2>/dev/null | cut -d/ -f1 | grep -v libc-gconv-modules-extra | xargs apt "${option[@]}" install
+fi
 
 cyan "Updating system"
-apt-get update
-apt-get -y dist-upgrade --autoremove --purge
+apt -y update
+apt "${option[@]}" upgrade
 apt-mark showmanual | xargs apt-mark auto
 echo
 
 install_package()
 {
-    cyan "Installing $1"
-    apt-get -y install --no-install-recommends $@
+    local pkg=$1
+    shift
+
+    cyan "Installing $pkg"
+    apt "${option[@]}" install $pkg $@
     echo
 
     if [[ ! "$minimal" ]]; then
-        cyan "Installing $1+"
-        rec=$(apt-cache show $1 | sed -n "/Recommends:/ { s///; s/,//g; p }")
+        cyan "Installing $pkg+"
+        rec=$(apt-cache show $pkg | sed -n "/Recommends:/ { s///; s/,//g; p }")
         man=$(apt-mark showmanual)
         new=$(echo $man $man $rec | tr ' ' '\n' | sort | uniq -u)
-        apt-get -y install --no-install-recommends $new $@
+        apt "${option[@]}" install $new $@
         apt-mark auto $new
         echo
     fi
 }
 
-install_package cccp-standard-meta
+install_package /root/cccp-standard-meta_*_all.deb
 
 cyan "Generating locales"
 sed -ri -e "s/# (en_US.UTF-8.*)/\1/" /etc/locale.gen
@@ -89,19 +101,19 @@ cyan "Forcing color terminal"
 sed -ri -e "s/#(force_color_prompt)=.*/\1=yes/" /etc/skel/.bashrc
 
 if [[ ! "$no_kernel" ]]; then
-    minimal=1 install_package cccp-boot-meta
+    minimal=1 install_package /root/cccp-boot-meta_*_all.deb
 
     cyan "Adding i915 to initramfs"
     echo "i915" >> /etc/initramfs/modules
 fi
 
 if [[ ! "$minimal" ]]; then
-    install_package term-meta
+    install_package /root/term-meta_*_all.deb
 
     cyan "Setting console font"
     echo "FONT='courier48x24.psf'" >> /etc/default/console-setup
 
-    install_package neovim-meta git-
+    install_package /root/neovim-meta_*_all.deb git-
 fi
 
 cyan "Updating root files"
