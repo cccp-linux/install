@@ -6,8 +6,11 @@ cage=${1:-cage}
 name=$(basename "$cage")
 
 ARCH=${ARCH:-$(dpkg-architecture -q DEB_BUILD_ARCH)}
-DIST=${DIST:-$(lsb_release -cs)}
+case $DIST in
+    pika) DIST=sid;;
+    "") DIST=$(lsb_release -cs);;
+esac
 
 cyan -n "Bootstrapping $cage "; echo "$ARCH $DIST"
 sleep 3
-debootstrap --arch=$ARCH --cache-dir=/var/cache/apt/archives --include=dbus,systemd --variant=minbase $DIST $cage
+debootstrap --arch=$ARCH --cache-dir=/var/cache/apt/archives --include=dbus,systemd,ca-certificates --variant=minbase $DIST $cage
