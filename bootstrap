@@ -8,10 +8,12 @@ fail() { red "$@"; exit 1; }
 (($EUID)) && fail "Must be root"
 
 cage=${1:-cage}
+name=$(basename "$cage")
+
 ARCH=${ARCH:-$(dpkg-architecture -q DEB_BUILD_ARCH)}
 DIST=${DIST:-$(lsb_release -cs)}
 
-cyan -n "Bootstrapping $cage "; echo "$ARCH $DIST"
+cyan -n "Bootstrapping $name "; echo "$ARCH $DIST"
 sleep 3
 
 mirror=
@@ -21,7 +23,8 @@ if [[ "$DIST" == "pika" ]]; then
 
     suite=(
         --components=nest,cockatiel
-        --variant=essential --include='(~prequired !~E !~npika-baseos) | ~npika-sources'
+        --variant=essential
+        --include='~prequired !~E !~npika-baseos' --include=pika-sources
         --keyring=$keyring
     )
 
