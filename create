@@ -21,30 +21,6 @@ echo
 $bin/bootstrap $cage
 echo
 
-if [[ "$DIST" == "unstable" || "$DIST" == "sid" ]]; then
-    cyan "Updating Debian sources"
-    rm -r $apt/{sources.list,trusted.gpg.d}
-    cp -v apt/sources.list.d/debian-sid.sources $apt/sources.list.d/
-    echo
-
-elif [[ "$DIST" == "stable" ]] || debian-distro-info --all | grep -qx "$DIST"; then
-    cyan "Updating Debian sources"
-    rm -r $apt/{sources.list,trusted.gpg.d}
-    cp -v apt/sources.list.d/debian.sources $apt/sources.list.d/
-    sed -ri -e "s/%distro%/$DIST/g; s/%arch%/$ARCH/g" $apt/sources.list.d/debian.sources
-    echo
-
-elif ubuntu-distro-info --all | grep -qx "$DIST"; then
-    cyan "Updating Ubuntu sources"
-    rm -r $apt/{sources.list,trusted.gpg.d}
-    cp -v apt/sources.list.d/ubuntu.sources $apt/sources.list.d/
-    sed -ri -e "s/%distro%/$DIST/g; s/%arch%/$ARCH/g" $apt/sources.list.d/ubuntu.sources
-
-    url=http://ports.ubuntu.com/ubuntu-ports
-    [[ "$ARCH" == "i386" || "$ARCH" == "amd64" ]] || sed -ri -e "s|URIs: .*|URIs: $url|" $apt/sources.list.d/ubuntu.sources
-    echo
-fi
-
 $bin/spawn $cage
 echo
 
