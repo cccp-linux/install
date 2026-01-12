@@ -19,15 +19,7 @@ echo
 $bin/bootstrap $cage
 echo
 
-if [[ "$DIST" == "pika" ]]; then
-    cyan "Adding PikaOS sources"
-    rm -r $apt/{sources.list,trusted.gpg.d}
-    cp -v apt/sources.list.d/50-pika.sources $apt/sources.list.d/
-    cp -v apt/keyrings/pika-keyring.gpg $apt/keyrings/
-    cp -v apt/preferences.d/50-pika $apt/preferences.d/
-    echo
-
-elif [[ "$DIST" == "unstable" || "$DIST" == "sid" ]]; then
+if [[ "$DIST" == "unstable" || "$DIST" == "sid" ]]; then
     cyan "Updating Debian sources"
     rm -r $apt/{sources.list,trusted.gpg.d}
     cp -v apt/sources.list.d/50-debian-sid.sources $apt/sources.list.d/
