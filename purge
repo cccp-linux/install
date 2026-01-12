@@ -1,7 +1,11 @@
 #!/bin/bash
 set -e
 
-red() { tput setaf 1; echo "$@"; tput sgr0; }
+cyan() { tput setaf 6; echo "$@"; tput sgr0; }
+ red() { tput setaf 1; echo "$@"; tput sgr0; }
+fail() { red "$@"; exit 1; }
+
+(($EUID)) && fail "Must be root"
 
 cage=${1:-cage}
 
