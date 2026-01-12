@@ -7,9 +7,11 @@ fail() { red "$@"; exit 1; }
 
 (($EUID)) && fail "Must be root"
 
+bin=$(dirname "$0")/bin
 cage=./cage
-spawn $cage
-shell $cage
-stop  $cage
+
+$bin/spawn $cage
+$bin/shell $cage
+$bin/stop  $cage
 
 rm -rv $cage/{root,home/*}/.bash_history 2>/dev/null
