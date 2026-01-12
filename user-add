@@ -8,8 +8,10 @@ fail() { red "$@"; exit 1; }
 (($EUID)) && fail "Must be root"
 (($#< 1)) && fail "Specify username to add"
 
+bin=$(dirname "$0")/bin
 cage=./cage
-spawn $cage
+
+$bin/spawn $cage
 cyan "Creating user $1"
-shell $cage /usr/bin/homectl create --member-of=audio,render,sudo,systemd-journal,users,video "$@"
-stop  $cage
+$bin/shell $cage /usr/bin/homectl create --member-of=audio,render,sudo,systemd-journal,users,video "$@"
+$bin/stop  $cage
