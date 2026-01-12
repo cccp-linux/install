@@ -8,10 +8,11 @@ fail() { red "$@"; exit 1; }
 (($EUID)) && fail "Must be root"
 
 cage=${1:-cage}
+name=$(basename "$cage")
 
 if [[ -d "$cage" ]]; then
     for n in 5 4 3 2 1; do
-        red -ne "\rPurging $cage in"; echo -n " $n ... "
+        red -ne "\rPurging $name in"; echo -n " $n ... "
         sleep 1
     done
     echo
