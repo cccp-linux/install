@@ -21,23 +21,11 @@ for p in $@; do
 done
 
 export DEBIAN_FRONTEND=noninteractive
-option=(-y --reinstall --allow-downgrades --no-install-recommends -o Dpkg::Options::="--force-confnew")
-echo
-
-if [[ "$pika" ]]; then
-    cyan "Installing pika-sources"
-    sed -i 's/$/ cockatiel/' /etc/apt/sources.list
-    apt -y update
-    echo
-    apt -y install pika-sources
-    rm  -r /etc/apt/{sources.list,trusted.gpg.d}
-    echo
-fi
 
 cyan "Updating system"
 apt -y update
 echo
-apt "${option[@]}" full-upgrade ${pika:+pika-baseos-minimal-}
+apt -y full-upgrade --no-install-recommends
 apt-mark showmanual | xargs apt-mark auto
 echo
 
@@ -47,7 +35,7 @@ install_package()
     shift
 
     cyan "Installing $pkg"
-    apt "${option[@]}" install $pkg $@
+    apt -y install --no-install-recommends $pkg $@
     echo
 
     if [[ ! "$minimal" ]]; then
@@ -55,13 +43,13 @@ install_package()
         rec=$(apt-cache show $pkg | sed -n "/Recommends:/ { s///; s/,//g; p }")
         man=$(apt-mark showmanual)
         new=$(echo $man $man $rec | tr ' ' '\n' | sort | uniq -u)
-        apt "${option[@]}" install $new $@
+        apt -y install --no-install-recommends $new $@
         apt-mark auto $new
         echo
     fi
 }
 
-install_package /root/cccp-standard-meta_*_all.deb
+install_package cccp-standard-meta
 
 cyan "Generating locales"
 sed -ri -e "s/# (en_US.UTF-8.*)/\1/" /etc/locale.gen
@@ -99,19 +87,19 @@ cyan "Forcing color terminal"
 sed -ri -e "s/#(force_color_prompt)=.*/\1=yes/" /etc/skel/.bashrc
 
 if [[ ! "$no_kernel" ]]; then
-    minimal=1 install_package /root/cccp-boot-meta_*_all.deb
+    minimal=1 install_package cccp-boot-meta
 
     cyan "Adding i915 to initramfs"
     echo "i915" >> /etc/initramfs/modules
 fi
 
 if [[ ! "$minimal" ]]; then
-    install_package /root/term-meta_*_all.deb
+    install_package term-meta
 
     cyan "Setting console font"
     echo "FONT='courier48x24.psf'" >> /etc/default/console-setup
 
-    install_package /root/neovim-meta_*_all.deb git-
+    install_package neovim-meta git-
 fi
 
 cyan "Updating root files"

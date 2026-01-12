@@ -7,27 +7,38 @@ fail() { red "$@"; exit 1; }
 
 (($EUID)) && fail "Must be root"
 
-bin=$(dirname "$0")/bin
-cage=./cage
+cage=${1:-cage}
+name=$(basename "$cage")
+
 apt=$cage/etc/apt
+bin=$(dirname "$0")
 
 export ARCH=${ARCH:-$(dpkg-architecture -q DEB_BUILD_ARCH)}
-export DIST=${DIST:-resolute}
+export DIST=${DIST:-pika}
 
-$bin/stop $cage
+if machinectl show $name 2>/dev/null | grep -q State=running; then
+    cyan "Stopping $name"
+    machinectl stop $name
+fi
+
 $bin/purge $cage
 echo
 
 $bin/bootstrap $cage
 echo
 
-$bin/spawn $cage
-echo
+cyan "Adding cccp sources"
+url=https://cccp-linux.github.io/packages/cccp-linux-keyring.asc
+wget -qO- $url | gpg --dearmor > $apt/keyrings/cccp-linux-keyring.gpg
+cat > $apt/sources.list.d/cccp-linux.sources <<EOF
+Types: deb
+URIs: https://cccp-linux.github.io/packages
+Suites: $DIST
+Components: main
+Signed-By: /etc/apt/keyrings/cccp-linux-keyring.gpg
+EOF
 
 cyan "Starting stage3"
-cp -v $(dirname "$0")/deb/*.deb $cage/root/
 cp -v $bin/stage3 $cage/root/
-$bin/shell $cage /root/stage3 "$DIST" "$@"
+$bin/spawn $cage /root/stage3 "$DIST" "$@"
 echo
-
-$bin/stop $cage
