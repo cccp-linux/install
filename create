@@ -1,11 +1,13 @@
 #!/bin/bash
 set -e
 
-bin=$(dirname "$0")/bin
-source $bin/color
+cyan() { tput setaf 6; echo "$@"; tput sgr0; }
+ red() { tput setaf 1; echo "$@"; tput sgr0; }
+fail() { red "$@"; exit 1; }
 
 (($EUID)) && fail "Must be root"
 
+bin=$(dirname "$0")/bin
 cage=./cage
 apt=$cage/etc/apt
 

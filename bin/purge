@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-source $(dirname "$0")/color
+red() { tput setaf 1; echo "$@"; tput sgr0; }
+
 cage=${1:-cage}
 
 if [[ -d "$cage" ]]; then

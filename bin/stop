@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-source $(dirname "$0")/color
+cyan() { tput setaf 6; echo "$@"; tput sgr0; }
+
 cage=${1:-cage}
 name=$(basename "$cage")
 

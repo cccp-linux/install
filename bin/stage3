@@ -2,15 +2,13 @@
 set -e
 shopt -s dotglob
 
+cyan() { tput setaf 6; echo "$@"; tput sgr0; }
+
 # prevent services from starting during install
 fp=/usr/sbin/policy-rc.d
 trap "rm -f $fp" EXIT
 echo -e "#!/bin/sh\nexit 101" > $fp
 chmod +x $fp
-
-cyan() { tput setaf 6; echo "$@"; tput sgr0; }
- red() { tput setaf 1; echo "$@"; tput sgr0; }
-fail() { red "$@"; exit 1; }
 
 unset minimal no_kernel pika
 

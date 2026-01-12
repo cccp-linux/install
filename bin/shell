@@ -1,9 +1,8 @@
 #!/bin/bash
 set -e
 
-source $(dirname "$0")/color
 cage=${1:-cage}
-shift
 name=$(basename "$cage")
 
+shift
 machinectl shell $name "$@"
