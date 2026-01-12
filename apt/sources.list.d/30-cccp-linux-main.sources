@@ -1,5 +1,0 @@
-Types: deb
-URIs: https://ppa.launchpadcontent.net/cccp-linux/main/ubuntu
-Suites: %distro%
-Components: main
-Signed-By: /etc/apt/keyrings/cccp-linux-keyring.gpg
