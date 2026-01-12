@@ -2,6 +2,10 @@
 set -e
 
 cyan() { tput setaf 6; echo "$@"; tput sgr0; }
+ red() { tput setaf 1; echo "$@"; tput sgr0; }
+fail() { red "$@"; exit 1; }
+
+(($EUID)) && fail "Must be root"
 
 cage=${1:-cage}
 ARCH=${ARCH:-$(dpkg-architecture -q DEB_BUILD_ARCH)}
@@ -71,16 +75,16 @@ EOF"
 fi
 
 cache=/var/cache/apt/archives
-args=(
+suite=(
     --architectures=$ARCH
     --setup-hook="mkdir -p \$1$cache"
     --setup-hook="mount --bind $cache \$1$cache"
     "${suite[@]}"
-    --include=apt,ca-certificates,dbus,systemd 
+    --include=apt,ca-certificates,dbus,systemd
     --customize-hook="rm -rv \$1/etc/apt/sources.list \$1/etc/apt/trusted.gpg.d/"
     --customize-hook="chroot \$1 apt -y update"
     --customize-hook="chroot \$1 apt -y full-upgrade"
     --customize-hook="umount \$1$cache"
 )
 
-mmdebstrap -v "${args[@]}" $DIST $cage $mirror
+mmdebstrap -v "${suite[@]}" $DIST $cage $mirror
