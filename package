@@ -7,6 +7,9 @@ fail() { red "$@"; exit 1; }
 
 (($EUID)) && fail "Must be root"
 
-cage=./cage
+cage=${1:-cage}
+name=$(basename "$cage")
+
+cyan "Packaging $name"
 rm -rv $cage/{root,home/*}/.bash_history 2>/dev/null
 tar -cvzpf image.tar.gz -C $cage "$@" .
