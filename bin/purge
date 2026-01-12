@@ -11,6 +11,7 @@ if [[ -d "$cage" ]]; then
     done
     echo
 
+    umount $cage/var/cache/apt/archives 2>/dev/null || true
     rm -rv $cage
 fi
 mkdir $cage

@@ -6,11 +6,24 @@ cage=${1:-cage}
 name=$(basename "$cage")
 
 ARCH=${ARCH:-$(dpkg-architecture -q DEB_BUILD_ARCH)}
-case $DIST in
-    pika) DIST=sid;;
-    "") DIST=$(lsb_release -cs);;
-esac
+DIST=${DIST:-$(lsb_release -cs)}
 
 cyan -n "Bootstrapping $cage "; echo "$ARCH $DIST"
 sleep 3
-debootstrap --arch=$ARCH --cache-dir=/var/cache/apt/archives --include=dbus,systemd,ca-certificates --variant=minbase $DIST $cage
+
+cache=/var/cache/apt/archives
+cache_hooks=(
+    --setup-hook="mkdir -p \$1$cache"
+    --setup-hook="mount --bind $cache \$1$cache"
+    --customize-hook="umount \$1$cache"
+)
+
+if [[ "$DIST" == "pika" ]]; then
+    :
+else
+    ubuntu-distro-info --all | grep -qx "$DIST" && comp=main,universe || comp=main
+
+    mmdebstrap -v --variant=required --architectures=$ARCH --components=$comp "${cache_hooks[@]}" \
+        --include=apt,dbus,ca-certificates,locales,systemd \
+    $DIST $cage
+fi
