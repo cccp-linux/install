@@ -12,18 +12,26 @@ cyan -n "Bootstrapping $cage "; echo "$ARCH $DIST"
 sleep 3
 
 cache=/var/cache/apt/archives
-cache_hooks=(
+args=(
+    --verbose
+    --architectures=$ARCH
+    --variant=required --include=apt,ca-certificates,dbus,systemd 
     --setup-hook="mkdir -p \$1$cache"
     --setup-hook="mount --bind $cache \$1$cache"
-    --customize-hook="umount \$1$cache"
 )
 
+mirror=
 if [[ "$DIST" == "pika" ]]; then
-    :
-else
-    ubuntu-distro-info --all | grep -qx "$DIST" && comp=main,universe || comp=main
+    mirror=https://ppa.pika-os.com
+    keyring=/tmp/pika.gpg
+    wget -qU "Debian APT-HTTP/1.3 (1.2.3)" -O- $mirror/key.gpg | gpg --dearmor > $keyring
 
-    mmdebstrap -v --variant=required --architectures=$ARCH --components=$comp "${cache_hooks[@]}" \
-        --include=apt,dbus,ca-certificates,locales,systemd \
-    $DIST $cage
+    args+=(--components=nest --keyring=$keyring --customize-hook="cp $keyring \$1/etc/apt/trusted.gpg.d/")
+
+elif ubuntu-distro-info --all | grep -qx "$DIST"; then
+    args+=(--components=main,universe)
 fi
+
+args+=(--customize-hook="umount \$1$cache")
+
+mmdebstrap "${args[@]}" $DIST $cage $mirror
