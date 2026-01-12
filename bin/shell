@@ -1,8 +1,0 @@
-#!/bin/bash
-set -e
-
-cage=${1:-cage}
-name=$(basename "$cage")
-
-shift
-machinectl shell $name "$@"
