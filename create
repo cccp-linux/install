@@ -25,7 +25,7 @@ if [[ "$DIST" == "unstable" || "$DIST" == "sid" ]]; then
     cp -v apt/sources.list.d/50-debian-sid.sources $apt/sources.list.d/
     echo
 
-elif debian-distro-info --all | grep -qx "$DIST"; then
+elif [[ "$DIST" == "stable" ]] || debian-distro-info --all | grep -qx "$DIST"; then
     cyan "Updating Debian sources"
     rm -r $apt/{sources.list,trusted.gpg.d}
     cp -v apt/sources.list.d/50-debian.sources $apt/sources.list.d/
