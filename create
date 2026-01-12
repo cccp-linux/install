@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-PATH=$(dirname "$0")/bin:$PATH
-source color
+bin=$(dirname "$0")/bin
+source $bin/color
 
 (($EUID)) && fail "Must be root"
 
@@ -12,11 +12,11 @@ apt=$cage/etc/apt
 export ARCH=${ARCH:-$(dpkg-architecture -q DEB_BUILD_ARCH)}
 export DIST=${DIST:-resolute}
 
-stop $cage
-purge $cage
+$bin/stop $cage
+$bin/purge $cage
 echo
 
-bootstrap $cage
+$bin/bootstrap $cage
 echo
 
 if [[ "$DIST" == "pika" ]]; then
@@ -51,13 +51,13 @@ elif ubuntu-distro-info --all | grep -qx "$DIST"; then
     echo
 fi
 
-spawn $cage
+$bin/spawn $cage
 echo
 
 cyan "Starting stage3"
-cp -v $(dirname "$0")/bin/stage3 $cage/root/
 cp -v $(dirname "$0")/deb/*.deb $cage/root/
-shell $cage /root/stage3 "$DIST" "$@"
+cp -v $bin/stage3 $cage/root/
+$bin/shell $cage /root/stage3 "$DIST" "$@"
 echo
 
-stop $cage
+$bin/stop $cage
