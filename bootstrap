@@ -16,19 +16,7 @@ DIST=${DIST:-$(lsb_release -cs)}
 cyan -n "Bootstrapping $name "; echo "$ARCH $DIST"
 sleep 3
 
-mirror=
-if [[ "$DIST" == "pika" ]]; then
-    mirror=https://ppa.pika-os.com keyring=/tmp/pika.gpg
-    wget -qU "Debian APT-HTTP/1.3 (1.2.3)" -O- $mirror/key.gpg | gpg --dearmor > $keyring
-
-    suite=(
-        --components=nest,cockatiel
-        --variant=essential
-        --include='~prequired !~E !~npika-baseos' --include=pika-sources
-        --keyring=$keyring
-    )
-
-elif [[ "$DIST" == "unstable" || "$DIST" == "sid" ]]; then
+if [[ "$DIST" == "unstable" || "$DIST" == "sid" ]]; then
     suite=(
         --components=main
         --variant=required
@@ -61,20 +49,22 @@ EOF"
     )
 
 elif ubuntu-distro-info --all | grep -qx "$DIST"; then
-    mirror=http://archive.ubuntu.com/ubuntu
-    [[ "$ARCH" == "i386" || "$ARCH" == "amd64" ]] || mirror=http://ports.ubuntu.com/ubuntu-ports
+    url=http://archive.ubuntu.com/ubuntu
+    [[ "$ARCH" == "i386" || "$ARCH" == "amd64" ]] || url=http://ports.ubuntu.com/ubuntu-ports
 
     suite=(
         --components=main
         --variant=required
         --customize-hook="cat > \$1/etc/apt/sources.list.d/ubuntu.sources <<EOF
 Types: deb
-URIs: $mirror
+URIs: $url
 Suites: $DIST $DIST-updates $DIST-backports $DIST-security
 Components: main restricted universe multiverse
 Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
 EOF"
     )
+else
+    fail "Unsupported distro $DIST"
 fi
 
 cache=/var/cache/apt/archives
@@ -90,4 +80,4 @@ suite=(
     --customize-hook="umount \$1$cache"
 )
 
-mmdebstrap -v "${suite[@]}" $DIST $cage $mirror
+mmdebstrap -v "${suite[@]}" $DIST $cage
