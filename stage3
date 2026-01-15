@@ -93,6 +93,19 @@ if [[ ! "$no_kernel" ]]; then
     echo "i915" >> /etc/initramfs/modules
 fi
 
+cyan "Adding support for .profile.d"
+cat >> /etc/skel/.profile <<'EOF'
+
+if [ -d "$HOME/.profile.d" ]; then
+  for i in $(run-parts --list --regex '^[a-zA-Z0-9_][a-zA-Z0-9._-]*\.sh$' "$HOME/.profile.d"); do
+    if [ -r $i ]; then
+      . $i
+    fi
+  done
+  unset i
+fi
+EOF
+
 if [[ ! "$minimal" ]]; then
     install_package term-meta
 
