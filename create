@@ -14,7 +14,7 @@ apt=$cage/etc/apt
 bin=$(dirname "$0")
 
 export ARCH=${ARCH:-$(dpkg-architecture -q DEB_BUILD_ARCH)}
-export DIST=${DIST:-pika}
+export DIST=${DIST:-sid}
 
 if machinectl show $name 2>/dev/null | grep -q State=running; then
     cyan "Stopping $name"
