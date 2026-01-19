@@ -36,9 +36,15 @@ install_package()
         cyan "Installing $pkg+"
         rec=$(apt-cache show $pkg | sed -n "/Recommends:/ { s///; s/,//g; p }")
         man=$(apt-mark showmanual)
-        new=$(echo $man $man $rec | tr ' ' '\n' | sort | uniq -u)
-        apt -y install --no-install-recommends $new $@
-        apt-mark auto $new
+
+        rec=$(echo $man $man $rec | tr ' ' '\n' | sort | uniq -u)
+        val=$(for p in $rec; do ((2 == $(apt-cache showpkg $p | grep -A3 "^Provides:" | wc -l))) || echo $p; done)
+        new=$(apt-get -s install --no-install-recommends $val $@ | grep "^Inst " | cut -d' ' -f2)
+
+        if [[ "$new" ]]; then
+            apt -y install --no-install-recommends $new
+            apt-mark auto $new
+        fi
         echo
     fi
 }
@@ -81,7 +87,7 @@ cyan "Forcing color terminal"
 sed -ri -e "s/#(force_color_prompt)=.*/\1=yes/" /etc/skel/.bashrc
 
 if [[ ! "$no_kernel" ]]; then
-    minimal=1 install_package cccp-boot-meta
+    install_package cccp-boot-meta
 
     cyan "Adding i915 to initramfs"
     echo "i915" >> /etc/initramfs/modules
