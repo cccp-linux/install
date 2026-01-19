@@ -11,4 +11,4 @@ cage=${1:-cage}
 name=$(basename "$cage")
 
 cyan "Spawning $name"
-systemd-nspawn --bind=/var/cache/apt/archives --directory=$cage --machine=$name --timezone=off "${@:2}"
+systemd-nspawn --bind=/var/cache/apt/archives --directory=$cage --machine=$name --resolv-conf=bind-stub --timezone=off "${@:2}"
