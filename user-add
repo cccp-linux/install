@@ -20,7 +20,7 @@ if ! machinectl show $name 2>/dev/null | grep -q State=running; then
 fi
 
 cyan "Creating user $1"
-machinectl shell $name /usr/bin/homectl create --member-of=audio,render,sudo,systemd-journal,users,video "$@"
+machinectl shell $name /usr/bin/homectl create --member-of=adm,audio,render,sudo,users,video "$@"
 sleep 1
 
 if $ran; then
