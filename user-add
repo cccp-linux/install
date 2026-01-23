@@ -14,7 +14,7 @@ name=$(basename "$cage")
 ran=false
 if ! machinectl show $name 2>/dev/null | grep -q State=running; then
     $(dirname "$0")/spawn $cage --boot &
-    sleep 3
+    sleep 5
     echo
     ran=true
 fi
