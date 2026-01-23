@@ -110,7 +110,7 @@ if [[ ! "$minimal" ]]; then
     install_package term-meta
 
     cyan "Setting console font"
-    echo "FONT='courier48x24.psf'" >> /etc/default/console-setup
+    echo "FONT='courier64x32.psf'" >> /etc/default/console-setup
 
     install_package neovim-meta git-
 fi
