@@ -113,6 +113,8 @@ if [[ ! "$minimal" ]]; then
     echo "FONT='courier64x32.psf'" >> /etc/default/console-setup
 
     install_package neovim-meta git-
+
+    install_package shell-meta
 fi
 
 cyan "Updating root files"
