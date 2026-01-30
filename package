@@ -10,6 +10,9 @@ fail() { red "$@"; exit 1; }
 cage=${1:-cage}
 name=$(basename "$cage")
 
-cyan "Packaging $name"
 rm -rv $cage/{root,home/*}/.bash_history 2>/dev/null
-tar -cvzpf image.tar.gz -C $cage "$@" .
+
+echo
+cyan "Packaging $name"
+alias tarx="tar --xattrs --xattrs-include='*' --acls --special"
+tarx -cvzpf image.tar.gz -C $cage "$@" .
