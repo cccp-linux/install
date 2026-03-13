@@ -7,7 +7,7 @@ fail() { red "$@"; exit 1; }
 
 (($EUID)) && fail "Must be root"
 
-cage=${1:-cage}
+cage=${1:-/var/cache/cage}
 name=$(basename "$cage")
 
 apt=$cage/etc/apt
