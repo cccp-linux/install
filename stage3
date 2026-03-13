@@ -25,27 +25,27 @@ echo
 
 install_package()
 {
-    local pkg=$1
+    local package="$1"
     shift
 
-    cyan "Installing $pkg"
-    apt -y install --no-install-recommends $pkg $@
+    local rec=$(apt-cache depends "$package" | grep "Recommends:")
+    local rec=$(echo "$rec" | awk '{print $2}')
+    local man=$(apt-mark showmanual)
+    local rec=$(echo $man $man $rec | tr ' ' '\n' | sort | uniq -u)
+    # packages with no install candidates will return 2 lines and will be ignored
+    local val=$(for p in $rec; do ((2 == $(apt-cache showpkg $p | grep -A3 "^Provides:" | wc -l))) || echo $p; done)
+
+    cyan "Installing $package"
+    apt -y install --no-install-recommends "$package" "$@"
     echo
 
-    if [[ ! "$minimal" ]]; then
-        cyan "Installing $pkg+"
-        rec=$(apt-cache show $pkg | sed -n "/Recommends:/ { s///; s/,//g; p }")
-        man=$(apt-mark showmanual)
-
-        rec=$(echo $man $man $rec | tr ' ' '\n' | sort | uniq -u)
-        val=$(for p in $rec; do ((2 == $(apt-cache showpkg $p | grep -A3 "^Provides:" | wc -l))) || echo $p; done)
-        new=$(apt-get -s install --no-install-recommends $val $@ | grep "^Inst " | cut -d' ' -f2)
-
+    if [[ "$val" && ! "$minimal" ]]; then
+        new=$(apt-get -s install --no-install-recommends $val "$@" | grep "^Inst " | cut -d' ' -f2)
         if [[ "$new" ]]; then
-            apt -y install --no-install-recommends $new
-            apt-mark auto $new
+            cyan "Installing $package+"
+            apt install --no-install-recommends --mark-auto $new "$@"
+            echo
         fi
-        echo
     fi
 }
 
