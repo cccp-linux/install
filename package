@@ -10,7 +10,7 @@ fail() { red "$@"; exit 1; }
 cage=${1:-cage}
 name=$(basename "$cage")
 
-rm -rv $cage/{root,home/*}/.bash_history 2>/dev/null
+rm -rv $cage/{root,home/*}/.bash_history 2>/dev/null | true
 
 echo
 cyan "Packaging $name"
