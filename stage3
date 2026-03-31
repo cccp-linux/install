@@ -86,6 +86,12 @@ cyan "Forcing color terminal"
 sed -ri -e "s/#(force_color_prompt)=.*/\1=yes/" /etc/skel/.bashrc
 
 if [[ ! "$no_kernel" ]]; then
+    cyan "Relocating boot symlinks"
+    cat > /etc/kernel-img.conf <<EOF
+# kernel-img.conf
+link_in_boot = 1
+EOF
+
     install_package cccp-boot-meta
 
     cyan "Adding i915 to initramfs"
