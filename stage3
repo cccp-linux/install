@@ -74,7 +74,7 @@ sed -ri -e "s/#(SplitMode)=.*/\1=none/" /etc/systemd/journald.conf
 
 cyan "Modifying logind.conf"
 sed -ri -e "
-    s/#(NAutoVTs)=.*/\1=12/;
+    s/#(NAutoVTs)=.*/\1=6/;
     s/#(ReserveVT)=.*/\1=1/;
     s/#(HandlePowerKey)=.*/\1=suspend/;
     s/#(HandlePowerKeyLongPress)=.*/\1=poweroff/;
@@ -107,6 +107,12 @@ EOF
 
 if [[ ! "$minimal" ]]; then
     install_package term-meta
+
+    systemctl disable getty@.service
+    systemctl enable  getty@tty7.service
+
+    systemctl enable  kmsconvt@.service
+    systemctl disable kmsconvt@tty1.service
 
     cyan "Setting console font"
     echo "FONT='courier64x32.psf'" >> /etc/default/console-setup
