@@ -4,13 +4,12 @@ shopt -s dotglob
 
 cyan() { tput setaf 6; echo "$@"; tput sgr0; }
 
-unset minimal no_kernel pika
+unset minimal no_kernel
 
 for p in $@; do
     case $p in
         minimal)   minimal=1;;
         no-kernel) no_kernel=1;;
-        pika)      pika=1;;
     esac
 done
 
