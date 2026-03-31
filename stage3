@@ -4,11 +4,12 @@ shopt -s dotglob
 
 cyan() { tput setaf 6; echo "$@"; tput sgr0; }
 
-unset minimal no_kernel
+unset minimal niri no_kernel
 
 for p in $@; do
     case $p in
         minimal)   minimal=1;;
+        niri)      niri=1;;
         no-kernel) no_kernel=1;;
     esac
 done
@@ -124,6 +125,8 @@ if [[ ! "$minimal" ]]; then
     echo "FONT='courier64x32.psf'" >> /etc/default/console-setup
 
     install_package neovim-meta git-
+
+    [[ "$niri" ]] && install_package niri-meta
 fi
 
 cyan "Updating root files"
