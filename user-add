@@ -8,22 +8,13 @@ fail() { red "$@"; exit 1; }
 (($EUID)) && fail "Must be root"
 (($#< 1)) && fail "Specify username to add"
 
+bin=$(dirname "$0")
 cage=cage
-name=$(basename "$cage")
-
-ran=false
-if ! machinectl show $name 2>/dev/null | grep -q State=running; then
-    $(dirname "$0")/spawn $cage --boot &
-    sleep 5
-    echo
-    ran=true
-fi
 
 cyan "Creating user $1"
-machinectl shell $name /usr/bin/homectl create --member-of=adm,audio,render,sudo,users,video "$@"
-sleep 1
-
-if $ran; then
-    cyan "Stopping $name"
-    machinectl stop $name
-fi
+$bin/spawn "$cage" /bin/bash -c "
+adduser '$1'
+for grp in adm audio netdev plugdev render sudo users video; do
+    adduser '$1' \$grp || true
+done
+"
