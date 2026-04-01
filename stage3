@@ -122,7 +122,7 @@ if [[ ! "$minimal" ]]; then
     systemctl disable kmsconvt@tty1.service
 
     cyan "Setting console font"
-    echo "FONT='courier64x32.psf'" >> /etc/default/console-setup
+    echo "FONT='courier48x24.psf'" >> /etc/default/console-setup
 
     install_package neovim-meta git-
 
