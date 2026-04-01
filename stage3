@@ -115,12 +115,6 @@ EOF
 if [[ ! "$minimal" ]]; then
     install_package term-meta
 
-    systemctl disable getty@.service
-    systemctl enable  getty@tty7.service
-
-    systemctl enable  kmsconvt@.service
-    systemctl disable kmsconvt@tty1.service
-
     cyan "Setting console font"
     echo "FONT='courier48x24.psf'" >> /etc/default/console-setup
 
